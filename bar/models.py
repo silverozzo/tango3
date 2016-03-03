@@ -23,7 +23,7 @@ class WorkDay(models.Model):
 
 class FoodMaterial(models.Model):
 	name      = models.CharField(max_length=200)
-	unit_name = models.CharField(max_length=200, default='')
+	unit_name = models.CharField(max_length=200, blank=True, default='')
 	
 	def __unicode__(self):
 		return self.name
@@ -70,6 +70,7 @@ class FoodMaterialItem(models.Model):
 class Recipe(models.Model):
 	name    = models.CharField(max_length=200)
 	comment = models.TextField(blank=True)
+	process = models.TextField(blank=True)
 	
 	def __unicode__(self):
 		return self.name
@@ -81,7 +82,7 @@ class Recipe(models.Model):
 class RecipeIngredient(models.Model):
 	recipe        = models.ForeignKey(Recipe)
 	food_material = models.ForeignKey(FoodMaterial)
-	extra_action  = models.TextField(blank=True)
+	extra_action  = models.CharField(max_length=250, blank=True)
 	count         = models.DecimalField(max_digits=8, decimal_places=4)
 	
 	def __unicode__(self):
@@ -105,9 +106,8 @@ class Calculation(models.Model):
 	def create(ingredient):
 		work_day = WorkDay.get_current()
 		Calculation.objects.filter(
-				when_date       = work_day.date, 
-				what_name       = ingredient.food_material.name, 
-				on_prescription = ingredient.recipe).delete()
+				when_date     = work_day.date, 
+				on_ingredient = ingredient).delete()
 		
 		calculation = Calculation()
 		calculation.when_date       = work_day.date

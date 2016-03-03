@@ -28,11 +28,11 @@ def food_material_creating(name='foobar'):
 	return material
 
 
-def food_material_item_creating(material, day):
+def food_material_item_creating(material, day, cost=Decimal('1.0')):
 	item = FoodMaterialItem(
 		food_material = material, 
 		when          = day, 
-		cost          = Decimal('1.0'), 
+		cost          = cost, 
 		count         = Decimal('1.0'),
 		rest          = Decimal('1.0')
 	)
@@ -137,3 +137,21 @@ class CalculationTests(TestCase):
 		self.assertEqual(calc.what_count,      ingr.count)
 		self.assertEqual(calc.what_unit_name,  mat.unit_name)
 		self.assertEqual(calc.on_prescription, recipe)
+	
+	def test_change_costs(self):
+		day      = work_day_current_creating()
+		mat      = food_material_creating('mat1')
+		mat_item = food_material_item_creating(mat, day)
+		recipe   = recipe_creating()
+		ingr     = recipe_ingredient_creating(recipe, mat)
+		calc     = Calculation.create(ingr)
+		
+		self.assertEqual(1, Calculation.objects.count())
+		self.assertEqual(Decimal('0.01'), calc.what_full_cost)
+		
+		mat_item.cost = Decimal('2.00')
+		mat_item.save()
+		calc = Calculation.create(ingr)
+		
+		self.assertEqual(1, Calculation.objects.count())
+		self.assertEqual(Decimal('0.02'), calc.what_full_cost)
