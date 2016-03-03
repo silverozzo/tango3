@@ -25,6 +25,9 @@ class FoodMaterial(models.Model):
 	name      = models.CharField(max_length=200)
 	unit_name = models.CharField(max_length=200, default='')
 	
+	def __unicode__(self):
+		return self.name
+	
 	def __str__(self):
 		return self.name
 	
@@ -51,8 +54,11 @@ class FoodMaterialItem(models.Model):
 	rest          = models.DecimalField(max_digits=8, decimal_places=4, default=0)
 	unit_cost     = models.DecimalField(max_digits=8, decimal_places=2, default=0)
 	
+	def __unicode__(self):
+		return unicode(self.food_material) + ' (' + str(self.when) + ')'
+	
 	def __str__(self):
-		return str(self.food_material) + ' (' + str(self.when) + ')'
+		return unicode(self.food_material) + ' (' + str(self.when) + ')'
 	
 	def save(self, *args, **kwargs):
 		self.unit_cost = decimal.Decimal(self.cost) / decimal.Decimal(self.count)
@@ -63,10 +69,26 @@ class FoodMaterialItem(models.Model):
 
 class Recipe(models.Model):
 	name    = models.CharField(max_length=200)
-	comment = models.TextField()
+	comment = models.TextField(blank=True)
+	
+	def __unicode__(self):
+		return self.name
 	
 	def __str__(self):
 		return self.name
+
+
+class RecipeIngredient(models.Model):
+	recipe        = models.ForeignKey(Recipe)
+	food_material = models.ForeignKey(FoodMaterial)
+	extra_action  = models.TextField(blank=True)
+	count         = models.DecimalField(max_digits=8, decimal_places=4)
+	
+	def __unicode__(self):
+		return unicode(self.food_material) + ' x ' + str(self.count)
+	
+	def __str__(self):
+		return unicode(self.food_material) + ' x ' + str(self.count)
 
 
 class Calculation(models.Model):
@@ -77,49 +99,44 @@ class Calculation(models.Model):
 	what_unit_name  = models.CharField(max_length=200)
 	what_full_cost  = models.DecimalField(max_digits=8, decimal_places=2)
 	on_prescription = models.ForeignKey(Recipe)
+	on_ingredient   = models.ForeignKey(RecipeIngredient, default=None)
+	
+	@staticmethod
+	def create(ingredient):
+		work_day = WorkDay.get_current()
+		Calculation.objects.filter(
+				when_date       = work_day.date, 
+				what_name       = ingredient.food_material.name, 
+				on_prescription = ingredient.recipe).delete()
+		
+		calculation = Calculation()
+		calculation.when_date       = work_day.date
+		calculation.what_name       = ingredient.food_material.name
+		calculation.what_unit_cost  = ingredient.food_material.get_cost(work_day.date)
+		calculation.what_count      = ingredient.count
+		calculation.what_unit_name  = ingredient.food_material.unit_name
+		calculation.on_prescription = ingredient.recipe
+		calculation.on_ingredient   = ingredient
+		calculation.save()
+		
+		return calculation
 	
 	def save(self, *args, **kwargs):
-		decimal.getcontext().prec     = 2
-		decimal.getcontext().rounding = decimal.ROUND_UP
-		
 		self.what_full_cost = self.what_unit_cost * self.what_count
+		self.what_full_cost = self.what_full_cost.quantize(decimal.Decimal('.01'), rounding=decimal.ROUND_UP)
 		
 		return super(Calculation, self).save(*args, **kwargs)
 
 
-class RecipeIngredient(models.Model):
-	recipe        = models.ForeignKey(Recipe)
-	food_material = models.ForeignKey(FoodMaterial)
-	extra_action  = models.TextField()
-	count         = models.DecimalField(max_digits=8, decimal_places=4)
-	
-	def __str__(self):
-		return str(self.food_material) + ' x ' + str(self.count)
-	
-	def make_calculation(self):
-		work_day = WorkDay.get_current()
-		
-		Calculation.objects.filter(
-				when_date       = work_day.date, 
-				what_name       = self.food_material.name, 
-				on_prescription = self.recipe).delete()
-		
-		calculation = Calculation()
-		calculation.when_date       = work_day.date
-		calculation.what_name       = self.food_material.name
-		calculation.what_unit_cost  = self.food_material.get_cost(work_day.date)
-		calculation.what_count      = self.count
-		calculation.what_unit_name  = self.food_material.unit_name
-		calculation.on_prescription = self.recipe
-		calculation.save()
-		
-		return calculation
-
-
 class Product(models.Model):
 	name        = models.CharField(max_length=200)
-	receipt     = models.OneToOneField(Recipe)
+	recipe      = models.OneToOneField(Recipe)
 	fixed_price = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+	rounding    = models.DecimalField(max_digits=8, decimal_places=2, default=1)
+	markup      = models.DecimalField(max_digits=8, decimal_places=2, default=1)
+	
+	def __unicode__(self):
+		return self.name
 	
 	def __str__(self):
 		return self.name
@@ -128,5 +145,24 @@ class Product(models.Model):
 class SaleOffer(models.Model):
 	product = models.ForeignKey(Product)
 	day     = models.ForeignKey(WorkDay)
-	cost    = models.DecimalField(max_digits=8, decimal_places=2)
-	price   = models.DecimalField(max_digits=8, decimal_places=2)
+	cost    = models.DecimalField(max_digits=8, decimal_places=2, default=decimal.Decimal('0.00'))
+	price   = models.DecimalField(max_digits=8, decimal_places=2, default=decimal.Decimal('0.00'))
+	
+	def __unicode__(self):
+		return unicode(self.product) + ' (' + str(self.day) + ') -- ' + str(self.price)
+	
+	def __str__(self):
+		return unicode(self.product) + ' (' + str(self.day) + ') -- ' + str(self.price)
+	
+	def save(self, *args, **kwargs):
+		cost  = decimal.Decimal('0.00')
+		price = decimal.Decimal('0.00')
+		
+		ingredients = RecipeIngredient.objects.filter(recipe=self.product.recipe)
+		for ingredient in ingredients:
+			calculation = Calculation.create(ingredient)
+			cost += calculation.what_full_cost
+		
+		self.cost = cost
+		
+		return super(SaleOffer, self).save(*args, **kwargs)

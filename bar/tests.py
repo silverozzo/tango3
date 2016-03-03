@@ -129,7 +129,7 @@ class CalculationTests(TestCase):
 		mat_item = food_material_item_creating(mat, day)
 		recipe   = recipe_creating()
 		ingr     = recipe_ingredient_creating(recipe, mat)
-		calc     = ingr.make_calculation()
+		calc     = Calculation.create(ingr)
 		
 		self.assertEqual(calc.when_date,       day.date)
 		self.assertEqual(calc.what_name,       mat.name)
