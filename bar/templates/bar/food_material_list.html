@@ -1,0 +1,17 @@
+<a href={% url 'bar:main_menu' %}>menu</a>
+
+<form action={% url 'bar:food_material_import' %} method="post" enctype="multipart/form-data">
+	{% csrf_token %}
+	<input type="file" name="import" />
+	<input type="submit" />
+</form>
+
+{% if food_materials %}
+	<ul>
+		{% for material in food_materials %}
+			<li>{{ material }}</li>
+		{% endfor %}
+	</ul>
+{% else %}
+	no records
+{% endif %}

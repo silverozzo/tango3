@@ -1,11 +1,12 @@
 from django.contrib import admin
 
-from .models import FoodMaterial, FoodMaterialItem, Product, Receipt, ReceiptIngredient, WorkDay
+from .models import WorkDay, FoodMaterial, FoodMaterialItem, Recipe, RecipeIngredient, Calculation, Product
 
 
-admin.register(WorkDay)
-admin.register(FoodMaterial)
-admin.register(FoodMaterialItem)
-admin.register(Receipt)
-admin.register(ReceiptIngredient)
-admin.register(Product)
+admin.site.register(WorkDay)
+admin.site.register(FoodMaterial)
+admin.site.register(FoodMaterialItem)
+admin.site.register(Recipe)
+admin.site.register(RecipeIngredient)
+admin.site.register(Product)
+admin.site.register(Calculation)
