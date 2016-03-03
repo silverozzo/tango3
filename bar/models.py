@@ -140,6 +140,13 @@ class Product(models.Model):
 	
 	def __str__(self):
 		return self.name
+	
+	def make_price(self, cost):
+		price = (cost * self.markup) / (decimal.Decimal(10)**self.rounding)
+		price = price.quantize(decimal.Decimal('1'), rounding=decimal.ROUND_UP)
+		price = price * (decimal.Decimal(10)**self.rounding)
+		
+		return price
 
 
 class SaleOffer(models.Model):
@@ -163,6 +170,36 @@ class SaleOffer(models.Model):
 			calculation = Calculation.create(ingredient)
 			cost += calculation.what_full_cost
 		
-		self.cost = cost
+		self.cost  = cost
+		self.price = self.product.make_price(cost)
 		
 		return super(SaleOffer, self).save(*args, **kwargs)
+
+
+class Account(models.Model):
+	name       = models.CharField(max_length=200)
+	is_default = models.BooleanField(default=False)
+	costed     = models.BooleanField(default=False)
+	
+	def __unicode__(self):
+		return self.name
+
+
+class AccountTransaction(models.Model):
+	account    = models.ForeignKey(Account)
+	day        = models.ForeignKey(WorkDay)
+	sale_offer = models.ForeignKey(SaleOffer)
+	summ       = models.DecimalField(max_digits=8, decimal_places=2, blank=True)
+	mod_half   = models.BooleanField(default=False)
+	
+	def save(self, *args, **kwargs):
+		if self.summ is None or self.summ == 0:
+			if self.account.costed:
+				self.summ = self.sale_offer.cost
+			else:
+				self.summ = self.sale_offer.price
+		
+		if self.mod_half:
+			self.summ = self.summ / decimal.Decimal(2)
+		
+		return super(AccountTransaction, self).save(*args, **kwargs)

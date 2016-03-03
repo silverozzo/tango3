@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import WorkDay, FoodMaterial, FoodMaterialItem, Recipe, RecipeIngredient, Calculation, Product, SaleOffer
+from .models import WorkDay, FoodMaterial, FoodMaterialItem, Recipe, RecipeIngredient, Calculation, Product, SaleOffer, Account, AccountTransaction
 
 
 class FoodMaterialItemInline(admin.TabularInline):
@@ -25,6 +25,14 @@ class CalculationAdmin(admin.ModelAdmin):
 	list_display = ('when_date', 'on_prescription', 'what_name', 'what_unit_cost', 'what_count', 'what_unit_name', 'what_full_cost', 'on_ingredient')
 
 
+class AccountTransactionInline(admin.TabularInline):
+	model = AccountTransaction
+
+
+class AccountAdmin(admin.ModelAdmin):
+	inlines = [AccountTransactionInline]
+
+
 admin.site.register(WorkDay)
 admin.site.register(FoodMaterial, FoodMaterialAdmin)
 admin.site.register(FoodMaterialItem)
@@ -33,3 +41,5 @@ admin.site.register(RecipeIngredient)
 admin.site.register(Product)
 admin.site.register(Calculation, CalculationAdmin)
 admin.site.register(SaleOffer)
+admin.site.register(Account, AccountAdmin)
+admin.site.register(AccountTransaction)
