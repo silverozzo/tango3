@@ -25,6 +25,9 @@ class FoodMaterial(models.Model):
 	name      = models.CharField(max_length=200)
 	unit_name = models.CharField(max_length=200, blank=True, default='')
 	
+	class Meta:
+		ordering = ['name']
+	
 	def __unicode__(self):
 		return self.name
 	
@@ -71,6 +74,9 @@ class Recipe(models.Model):
 	name    = models.CharField(max_length=200)
 	comment = models.TextField(blank=True)
 	process = models.TextField(blank=True)
+	
+	class Meta:
+		ordering = ['name']
 	
 	def __unicode__(self):
 		return self.name
