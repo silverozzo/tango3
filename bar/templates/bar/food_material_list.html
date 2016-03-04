@@ -1,10 +1,13 @@
 <a href={% url 'bar:main_menu' %}>menu</a>
 
-<form action={% url 'bar:food_material_import' %} method="post" enctype="multipart/form-data">
-	{% csrf_token %}
-	<input type="file" name="import" />
-	<input type="submit" />
-</form>
+<p>
+	food material import
+	<form action={% url 'bar:food_material_import' %} method="post" enctype="multipart/form-data">
+		{% csrf_token %}
+		<input type="file" name="import" />
+		<input type="submit" />
+	</form>
+</p>
 
 {% if food_materials %}
 	<ul>

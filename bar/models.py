@@ -7,7 +7,10 @@ import math
 class WorkDay(models.Model):
 	date       = models.DateField()
 	is_current = models.BooleanField(default=False)
-
+	
+	class Meta:
+		ordering = ['-date']
+	
 	def __str__(self):
 		return str(self.date)
 	

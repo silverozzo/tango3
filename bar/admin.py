@@ -3,6 +3,10 @@ from django.contrib import admin
 from .models import WorkDay, FoodMaterial, FoodMaterialItem, Recipe, RecipeIngredient, Calculation, Product, SaleOffer, Account, AccountTransaction
 
 
+class WorkDayAdmin(admin.ModelAdmin):
+	list_display = ('date', 'is_current')
+
+
 class FoodMaterialItemInline(admin.TabularInline):
 	model = FoodMaterialItem
 
@@ -33,13 +37,13 @@ class AccountAdmin(admin.ModelAdmin):
 	inlines = [AccountTransactionInline]
 
 
-admin.site.register(WorkDay)
+admin.site.register(WorkDay,      WorkDayAdmin)
 admin.site.register(FoodMaterial, FoodMaterialAdmin)
 admin.site.register(FoodMaterialItem)
-admin.site.register(Recipe, RecipeAdmin)
+admin.site.register(Recipe,       RecipeAdmin)
 admin.site.register(RecipeIngredient)
 admin.site.register(Product)
-admin.site.register(Calculation, CalculationAdmin)
+admin.site.register(Calculation,  CalculationAdmin)
 admin.site.register(SaleOffer)
-admin.site.register(Account, AccountAdmin)
+admin.site.register(Account,      AccountAdmin)
 admin.site.register(AccountTransaction)

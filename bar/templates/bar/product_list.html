@@ -1,0 +1,22 @@
+<a href={% url 'bar:main_menu' %}>menu</a>
+
+<p>
+	simple product import
+	<form action={% url 'bar:simple_product_import' %} method="post" enctype="multipart/form-data">
+		{% csrf_token %}
+		<input type="text" name="prefix" />
+		<input type="file" name="import" />
+		<input type="submit" />
+	</form>
+</p>
+
+
+{% if products %}
+	<ul>
+		{% for product in products %}
+			<li>{{ product }}</li>
+		{% endfor %}
+	</ul>
+{% else %}
+	no records
+{% endif %}
