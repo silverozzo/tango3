@@ -26,7 +26,15 @@ class RecipeAdmin(admin.ModelAdmin):
 
 
 class CalculationAdmin(admin.ModelAdmin):
-	list_display = ('when_date', 'on_prescription', 'what_name', 'what_unit_cost', 'what_count', 'what_unit_name', 'what_full_cost', 'on_ingredient')
+	list_display = ('when_date', 'on_prescription', 'what_name', 
+		'what_unit_cost', 'what_count', 'what_unit_name', 
+		'what_full_cost', 'on_ingredient'
+	)
+
+
+class ProductAdmin(admin.ModelAdmin):
+	list_display  = ('name', 'is_active')
+	list_editable = ('is_active',)
 
 
 class AccountTransactionInline(admin.TabularInline):
@@ -42,7 +50,7 @@ admin.site.register(FoodMaterial, FoodMaterialAdmin)
 admin.site.register(FoodMaterialItem)
 admin.site.register(Recipe,       RecipeAdmin)
 admin.site.register(RecipeIngredient)
-admin.site.register(Product)
+admin.site.register(Product,      ProductAdmin)
 admin.site.register(Calculation,  CalculationAdmin)
 admin.site.register(SaleOffer)
 admin.site.register(Account,      AccountAdmin)

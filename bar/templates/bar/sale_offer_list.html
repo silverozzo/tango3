@@ -1,0 +1,15 @@
+<a href={% url 'bar:main_menu' %}>menu</a>
+
+<p>
+	<a href={% url 'bar:sale_offer_generator' %}>генерация предложений</a>
+</p>
+
+{% if sale_offers %}
+	<ul>
+		{% for sale_offer in sale_offers %}
+			<li>{{ sale_offer }}</li>
+		{% endfor %}
+	</ul>
+{% else %}
+	no records
+{% endif %}

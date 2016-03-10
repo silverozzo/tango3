@@ -4,12 +4,21 @@
 	simple product import
 	<form action={% url 'bar:simple_product_import' %} method="post" enctype="multipart/form-data">
 		{% csrf_token %}
-		<input type="text" name="prefix" />
+		<input type="text" name="prefix" value="порция" />
 		<input type="file" name="import" />
 		<input type="submit" />
 	</form>
 </p>
 
+<p>
+	complex product import
+	<form action={% url 'bar:complex_product_import' %} method="post" enctype="multipart/form-data">
+		{% csrf_token %}
+		<input type="text" name="prefix" value="коктейль" />
+		<input type="file" name="import" />
+		<input type="submit" />
+	</form>
+</p>
 
 {% if products %}
 	<ul>

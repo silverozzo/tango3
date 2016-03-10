@@ -1,9 +1,9 @@
 from django.http      import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views     import generic
 
-from .models   import FoodMaterial, Product
-from .services import FoodMaterialImportService, SimpleProductImportService
+from .models   import FoodMaterial, Product, SaleOffer, WorkDay
+from .services import FoodMaterialImportService, SimpleProductImportService, ComplexProductImportService
 
 
 def index(request):
@@ -27,10 +27,23 @@ def food_material_import(request):
 
 def simple_product_import(request):
 	if request.FILES and request.FILES['import']:
-		SimpleProductImportService.run(request.FILES['import'])
+		SimpleProductImportService.run(request.FILES['import'], request.POST['prefix'])
 		return HttpResponse('file is here!')
 	else:
 		return HttpResponse('file lost..')
+
+
+def complex_product_import(request):
+	if request.FILES and request.FILES['import']:
+		ComplexProductImportService.run(request.FILES['import'], request.POST['prefix'])
+		return HttpResponse('file is here!')
+	else:
+		return HttpResponse('file lost...')
+
+
+def sale_offer_generator(request):
+	SaleOffer.generate()
+	return HttpResponse('sale offer generator will be here')
 
 
 class FoodMaterialListView(generic.ListView):
@@ -43,3 +56,13 @@ class ProductListView(generic.ListView):
 	model               = Product
 	template_name       = 'bar/product_list.html'
 	context_object_name = 'products'
+
+
+class SaleOfferListView(generic.ListView):
+	model               = SaleOffer
+	template_name       = 'bar/sale_offer_list.html'
+	context_object_name = 'sale_offers'
+	
+	def get_queryset(self):
+		day = WorkDay.get_current()
+		return SaleOffer.objects.filter(day=day)

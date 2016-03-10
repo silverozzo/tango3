@@ -60,6 +60,9 @@ class FoodMaterialItem(models.Model):
 	rest          = models.DecimalField(max_digits=8, decimal_places=4, default=0)
 	unit_cost     = models.DecimalField(max_digits=8, decimal_places=2, default=0)
 	
+	class Meta():
+		ordering = ['-when__date']
+	
 	def __unicode__(self):
 		return unicode(self.food_material) + ' (' + str(self.when) + ')'
 	
@@ -143,6 +146,7 @@ class Product(models.Model):
 	fixed_price = models.DecimalField(max_digits=8, decimal_places=2, default=0)
 	rounding    = models.DecimalField(max_digits=8, decimal_places=2, default=1)
 	markup      = models.DecimalField(max_digits=8, decimal_places=2, default=1)
+	is_active   = models.BooleanField(default=False)
 	
 	def __unicode__(self):
 		return self.name
@@ -183,6 +187,21 @@ class SaleOffer(models.Model):
 		self.price = self.product.make_price(cost)
 		
 		return super(SaleOffer, self).save(*args, **kwargs)
+	
+	@staticmethod
+	def generate():
+		day = WorkDay.get_current()
+		existed = SaleOffer.objects.filter(day=day).values_list('product', flat=True)
+		
+		for product in Product.objects.filter(is_active=True):
+			if product.id in existed:
+				continue
+			
+			offer = SaleOffer(
+				product = product,
+				day     = day
+			)
+			offer.save()
 
 
 class Account(models.Model):
@@ -200,6 +219,9 @@ class AccountTransaction(models.Model):
 	sale_offer = models.ForeignKey(SaleOffer)
 	summ       = models.DecimalField(max_digits=8, decimal_places=2, blank=True)
 	mod_half   = models.BooleanField(default=False)
+	
+	class Meta:
+		ordering = ('-day',)
 	
 	def save(self, *args, **kwargs):
 		if self.summ is None or self.summ == 0:
