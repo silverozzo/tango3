@@ -1,4 +1,6 @@
-from django.db import models
+from django.db        import models
+from django.db.models import Sum
+
 
 import decimal
 import math
@@ -44,12 +46,50 @@ class FoodMaterial(models.Model):
 		
 		return item.order_by('-when__date')[0]
 	
+	def get_item_with_rest(self):
+		item = FoodMaterialItem.objects.filter(food_material=self, rest__gt=0)
+		if not item.exists():
+			return None
+		
+		return item.order_by('when__date')[0]
+	
 	def get_cost(self, date):
 		item = self.get_item(date)
 		if not item:
 			return 0
 		
 		return item.unit_cost
+	
+	def get_rest(self):
+		return FoodMaterialItem.objects.filter(food_material=self, rest__gt=0).aggregate(Sum('rest'))
+	
+	def make_spend(self, count, transaction):
+		rest = count
+		for item in FoodMaterialItem.objects.filter(food_material=self, rest__gt=0).order_by('when__date'):
+			if rest <= decimal.Decimal(0):
+				print('rest is empty')
+				break
+			
+			if item.rest >= rest:
+				print('rest is less')
+				item.rest -= rest
+				item.save()
+				rest = decimal.Decimal(0)
+				continue
+			
+			if item.rest < rest:
+				print('rest is more')
+				rest -= item.rest
+				item.rest = decimal.Decimal(0)
+				item.save()
+				continue
+		
+		spend = FoodMaterialSpend()
+		spend.food_material = self
+		spend.transaction   = transaction
+		spend.count         = count - rest
+		spend.when          = transaction.day
+		spend.save()
 
 
 class FoodMaterialItem(models.Model):
@@ -72,6 +112,9 @@ class FoodMaterialItem(models.Model):
 	def save(self, *args, **kwargs):
 		self.unit_cost = decimal.Decimal(self.cost) / decimal.Decimal(self.count)
 		self.unit_cost = self.unit_cost.quantize(self.cost, rounding=decimal.ROUND_UP)
+		
+		if not self.pk:
+			self.rest = self.count
 		
 		return super(FoodMaterialItem, self).save(*args, **kwargs)
 
@@ -223,6 +266,9 @@ class AccountTransaction(models.Model):
 	class Meta:
 		ordering = ('-day',)
 	
+	def __unicode__(self):
+		return unicode(self.sale_offer.product) + ' for ' + str(self.summ)
+	
 	def save(self, *args, **kwargs):
 		if self.summ is None or self.summ == 0:
 			if self.account.costed:
@@ -233,4 +279,23 @@ class AccountTransaction(models.Model):
 		if self.mod_half:
 			self.summ = self.summ / decimal.Decimal(2)
 		
-		return super(AccountTransaction, self).save(*args, **kwargs)
+		need_spend = False
+		if not self.pk:
+			need_spend = True
+		
+		super(AccountTransaction, self).save(*args, **kwargs)
+		
+		if need_spend:
+			ingredients = RecipeIngredient.objects.filter(recipe=self.sale_offer.product.recipe)
+			for ingredient in ingredients:
+				ingredient.food_material.make_spend(ingredient.count, self)
+
+
+class FoodMaterialSpend(models.Model):
+	food_material = models.ForeignKey(FoodMaterial)
+	transaction   = models.ForeignKey(AccountTransaction)
+	count         = models.DecimalField(max_digits=8, decimal_places=4)
+	when          = models.ForeignKey(WorkDay)
+	
+	def __unicode__(self):
+		return unicode(self.food_material) + ' x ' + str(self.count) + ' (' + str(self.when) + ')'

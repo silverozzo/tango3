@@ -34,6 +34,8 @@ class FoodMaterialImportService():
 			if len(chunks) >= 8 and chunks[7]:
 				day = FoodMaterialImportService.get_work_day(chunks[7])
 				FoodMaterialImportService.check_item(material, day, chunks[2], chunks[3])
+			else:
+				print('no item for material: ' + unicode(material))
 	
 	@staticmethod
 	def get_food_material(name, unit_name):
@@ -85,7 +87,7 @@ class SimpleProductImportService():
 				continue
 			
 			if not FoodMaterial.objects.filter(name=chunks[1]).exists():
-				SimpleProductImportService.messages.append('no material: ' + chunks[1])
+				print('no material like: ' + chunks[1])
 				continue
 			
 			product = SimpleProductImportService.get_product(chunks[1], 
