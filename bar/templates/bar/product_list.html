@@ -1,31 +1,70 @@
-<a href={% url 'bar:main_menu' %}>menu</a>
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	{% load staticfiles %}
+	<link href={% static "favicon.ico" %} rel="shortcut icon">
+	<link rel="stylesheet" href={% static "css/style.css" %}>
+	<title></title>  
+	<!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+</head>
 
-<p>
-	simple product import
-	<form action={% url 'bar:simple_product_import' %} method="post" enctype="multipart/form-data">
-		{% csrf_token %}
-		<input type="text" name="prefix" value="порция" />
-		<input type="file" name="import" />
-		<input type="submit" />
-	</form>
-</p>
+<body>
+	<div class="container">
 
-<p>
-	complex product import
-	<form action={% url 'bar:complex_product_import' %} method="post" enctype="multipart/form-data">
-		{% csrf_token %}
-		<input type="text" name="prefix" value="коктейль" />
-		<input type="file" name="import" />
-		<input type="submit" />
-	</form>
-</p>
+		<header class="header clearfix">
+			<div class="logo">tango3.bar</div>
 
-{% if products %}
-	<ul>
-		{% for product in products %}
-			<li>{{ product }}</li>
-		{% endfor %}
-	</ul>
-{% else %}
-	no records
-{% endif %}
+			<nav class="menu_main">
+				<ul>
+					<li><a href={% url 'bar:food_material_list' %}>food materials</a></li>
+					<li class="active"><a href={% url 'bar:product_list' %}>products</a></li>
+					<li><a href={% url 'bar:sale_offer_list' %}>sale offers</a></li>
+				</ul>
+			</nav>
+		</header>
+
+		<div class="info">
+			<article class="article clearfix">
+				<div class="col_33">
+					<form action={% url 'bar:simple_product_import' %} method="post" enctype="multipart/form-data">
+						<h2>simple product import</h2>
+						{% csrf_token %}
+						<input type="text" name="prefix" value="порция" />
+						<input type="file" name="import" />
+						<input type="submit" class='button'/>
+					</form>
+
+					<form action={% url 'bar:complex_product_import' %} method="post" enctype="multipart/form-data">
+						<h2>complex product import</h2>
+						{% csrf_token %}
+						<input type="text" name="prefix" value="коктейль" />
+						<input type="file" name="import" />
+						<input type="submit" class='button'/>
+					</form>
+				</div>
+				
+				<div class="col_66">
+					{% if products %}
+						<h2>product list</h2>
+						<table class="table">
+							<tr>
+								<th>name</th>
+								<th>active</th>
+							</tr>
+							{% for product in products %}
+								<tr>
+									<td>{{ product.name }}</td>
+									<td>{{ product.is_active }}</td>
+								</tr>
+							{% endfor %}
+						</table>
+					{% else %}
+						no records
+					{% endif %}
+				</div>
+			</article>
+		</div>
+	</div>
+</body>
