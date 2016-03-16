@@ -1,20 +1,56 @@
-<a href={% url 'bar:main_menu' %}>menu</a>
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	{% load staticfiles %}
+	<link href={% static "favicon.ico" %} rel="shortcut icon">
+	<link rel="stylesheet" href={% static "css/style.css" %}>
+	<title></title>  
+	<!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+</head>
 
-<p>
-	food material import
-	<form action={% url 'bar:food_material_import' %} method="post" enctype="multipart/form-data">
-		{% csrf_token %}
-		<input type="file" name="import" />
-		<input type="submit" />
-	</form>
-</p>
+<body>
+	<div class="container">
 
-{% if food_materials %}
-	<ul>
-		{% for material in food_materials %}
-			<li>{{ material }}</li>
-		{% endfor %}
-	</ul>
-{% else %}
-	no records
-{% endif %}
+		<header class="header clearfix">
+			<div class="logo">tango3.bar</div>
+
+			<nav class="menu_main">
+				<ul>
+					<li class="active"><a href={% url 'bar:food_material_list' %}>food materials</a></li>
+					<li><a href={% url 'bar:product_list' %}>products</a></li>
+					<li><a href={% url 'bar:sale_offer_list' %}>sale offers</a></li>
+				</ul>
+			</nav>
+		</header>
+
+		<div class="info">
+			<article class="article clearfix">
+				<div class="col_33">
+					<form action={% url 'bar:food_material_import' %} method="post" enctype="multipart/form-data">
+						<h2>tsv import</h2>
+						{% csrf_token %}
+						<input type="file" name="import" />
+						<input type="submit" class="button" />
+					</form>
+				</div>
+				
+				<div class="col_66">
+					{% if food_materials %}
+					<table class="table">
+						{% for material in food_materials %}
+							<tr>
+								<td>{{ material }}</td>
+								<td>{{ material.unit_name }}</td>
+							</tr>
+						{% endfor %}
+					</table>
+					{% else %}
+						<p>no records</p>
+					{% endif %}
+				</div>
+			</article>
+		</div>
+	</div>
+</body>

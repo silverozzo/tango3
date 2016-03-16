@@ -1,5 +1,28 @@
-<ul>
-	<li><a href={% url 'bar:food_material_list' %}>пищевые материалы</a></li>
-	<li><a href={% url 'bar:product_list' %}>товарный лист</a></li>
-	<li><a href={% url 'bar:sale_offer_list' %}>предложения на текущий день</a></li>
-</ul>
+<!doctype html>
+{% load staticfiles %}
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href={% static "favicon.ico" %} rel="shortcut icon">
+  <link rel="stylesheet" href={% static "css/style.css" %}>
+  <title></title>  
+  <!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+</head>
+
+<body>
+	<div class="container">
+
+		<header class="header clearfix">
+			<div class="logo">tango3.bar</div>
+
+			<nav class="menu_main">
+				<ul>
+					<li><a href={% url 'bar:food_material_list' %}>food materials</a></li>
+					<li><a href={% url 'bar:product_list' %}>products</a></li>
+					<li><a href={% url 'bar:sale_offer_list' %}>sale offers</a></li>
+				</ul>
+			</nav>
+		</header>
+	</div>
+</body>
