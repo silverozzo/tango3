@@ -1,15 +1,60 @@
-<a href={% url 'bar:main_menu' %}>menu</a>
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	{% load staticfiles %}
+	<link href={% static "favicon.ico" %} rel="shortcut icon">
+	<link rel="stylesheet" href={% static "css/style.css" %}>
+	<title></title>  
+	<!--[if lt IE 9]><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+</head>
 
-<p>
-	<a href={% url 'bar:sale_offer_generator' %}>генерация предложений</a>
-</p>
+<body>
+	<div class="container">
 
-{% if sale_offers %}
-	<ul>
-		{% for sale_offer in sale_offers %}
-			<li>{{ sale_offer }}</li>
-		{% endfor %}
-	</ul>
-{% else %}
-	no records
-{% endif %}
+		<header class="header clearfix">
+			<div class="logo">
+				tango3.bar<br/>
+				{{ user }}
+			</div>
+			
+			<nav class="menu_main">
+				<ul>
+					<li><a href={% url 'bar:food_material_list' %}>food materials</a></li>
+					<li><a href={% url 'bar:product_list' %}>products</a></li>
+					<li class="active"><a href={% url 'bar:sale_offer_list' %}>sale offers</a></li>
+				</ul>
+			</nav>
+		</header>
+		
+		<div class="info">
+			<article class="article clearfix">
+				
+				<div class="col_33">
+					{% if user.is_authenticated %}
+						<a href={% url 'bar:sale_offer_generator' %}>generating</a>
+					{% else %}
+						&nbsp;
+					{% endif %}
+				</div>
+				
+				<div class="col_66">
+					{% if sale_offers %}
+						<h2>sale offers today ({{ today.date }})</h2>
+						<table class='table'>
+							{% for sale_offer in sale_offers %}
+								<tr>
+									<td>{{ sale_offer.product.name }}</td>
+									<td align='right'>{{ sale_offer.price }}</td>
+								<tr>
+							{% endfor %}
+						</table>
+					{% else %}
+						no records
+					{% endif %}
+				</div>
+			</article>
+		</div>
+	</div>
+</body>

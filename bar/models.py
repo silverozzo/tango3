@@ -201,6 +201,11 @@ class Product(models.Model):
 		price = price.quantize(decimal.Decimal('1'), rounding=decimal.ROUND_UP)
 		price = price * (decimal.Decimal(10)**self.rounding)
 		
+		if self.fixed_price > price:
+			price = self.fixed_price
+		if price > self.fixed_price:
+			print('calculated price is more than fixed')
+		
 		return price
 
 
@@ -209,6 +214,9 @@ class SaleOffer(models.Model):
 	day     = models.ForeignKey(WorkDay)
 	cost    = models.DecimalField(max_digits=8, decimal_places=2, default=decimal.Decimal('0.00'))
 	price   = models.DecimalField(max_digits=8, decimal_places=2, default=decimal.Decimal('0.00'))
+	
+	class Meta:
+		ordering = ('product__name',)
 	
 	def __unicode__(self):
 		return unicode(self.product) + ' (' + str(self.day) + ') -- ' + str(self.price)

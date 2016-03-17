@@ -43,7 +43,7 @@ def complex_product_import(request):
 
 def sale_offer_generator(request):
 	SaleOffer.generate()
-	return HttpResponse('sale offer generator will be here')
+	return redirect('bar:sale_offer_list')
 
 
 class FoodMaterialListView(generic.ListView):
@@ -66,3 +66,9 @@ class SaleOfferListView(generic.ListView):
 	def get_queryset(self):
 		day = WorkDay.get_current()
 		return SaleOffer.objects.filter(day=day)
+	
+	def get_context_data(self, **kwargs):
+		context = super(SaleOfferListView, self).get_context_data(**kwargs)
+		context['user']  = self.request.user
+		context['today'] = WorkDay.get_current()
+		return context
