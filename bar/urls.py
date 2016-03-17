@@ -14,4 +14,5 @@ urlpatterns = [
 	url(r'^simple_product_import$',  views.simple_product_import,          name='simple_product_import'),
 	url(r'^complex_product_import$', views.complex_product_import,         name='complex_product_import'),
 	url(r'^sale_offer_generator$',   views.sale_offer_generator,           name='sale_offer_generator'),
+	url(r'^add_transaction$',        views.add_transaction_form,           name='add_transaction'),
 ]

@@ -1,5 +1,5 @@
 from django.http      import HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.views     import generic
 
 from .models   import FoodMaterial, Product, SaleOffer, WorkDay, Account, AccountTransaction
@@ -38,6 +38,17 @@ def complex_product_import(request):
 def sale_offer_generator(request):
 	SaleOffer.generate()
 	return redirect('bar:sale_offer_list')
+
+
+def add_transaction_form(request):
+	if request.POST['sale_offer'] and request.POST['account']:
+		transaction = AccountTransaction(
+			account    = get_object_or_404(Account,   pk=request.POST['account']),
+			sale_offer = get_object_or_404(SaleOffer, pk=request.POST['sale_offer']),
+			day        = WorkDay.get_current()
+		)
+		transaction.save()
+	return redirect('bar:transaction_list')
 
 
 class FoodMaterialListView(generic.ListView):

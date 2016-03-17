@@ -32,25 +32,46 @@
 		<div class="info">
 			<article class="article clearfix">
 				<div class="col_50">
-					<form method='post'>
-						{% csrf_token %}
-						<input type='submit' class='button' /><br/><br/>
-						
-						<select name='account'>
-							{% for account in accounts %}
-								<option value='{{ account.id }}' {% if account.is_default %}selected{% endif %}>{{ account }}</option>
-							{% endfor %}
-						</select>
-						<table class='table'>
-							{% for offer in offers %}
-								<tr>
-									<td><input type="radio" name="sale_offer" id="radio-choice-{{ offer.id }}" tabindex="2" value="{{ offer.id }}" /></td>
-									<td><label for="radio-choice-{{ offer.id }}">{{ offer.product.name }}</label></td>
-									<td align='right'><label for="radio-choice-{{ offer.id }}"><strong>{{ offer.price }}</strong></label></td>
-								</tr>
-							{% endfor %}
-						</table>
-					</form>
+					{% if user.is_authenticated %}
+						<form action={% url 'bar:add_transaction' %} method='post'>
+							{% csrf_token %}
+							<input type='submit' class='button' /><br/><br/>
+							
+							<select name='account'>
+								{% for account in accounts %}
+									<option value='{{ account.id }}' {% if account.is_default %}selected{% endif %}>{{ account }}</option>
+								{% endfor %}
+							</select>
+							<table class='table'>
+								{% for offer in offers %}
+									<tr>
+										<td><input type="radio" name="sale_offer" id="radio-choice-{{ offer.id }}" tabindex="2" value="{{ offer.id }}" /></td>
+										<td><label for="radio-choice-{{ offer.id }}">{{ offer.product.name }}</label></td>
+										<td align='right'><label for="radio-choice-{{ offer.id }}"><strong>{{ offer.price }}</strong></label></td>
+									</tr>
+								{% endfor %}
+							</table>
+						</form>
+					{% else %}
+						&nbsp;
+					{% endif %}
+				</div>
+				
+				<div class="col_50">
+					<table class='table'>
+						<tr>
+							<th>account</th>
+							<th>name</th>
+							<th>summ</th>
+						</tr>
+						{% for transaction in transactions %}
+							<tr>
+								<td>{{ transaction.account }}</td>
+								<td>{{ transaction.sale_offer.product.name }}</td>
+								<td align='right'>{{ transaction.summ }}</td>
+							</tr>
+						{% endfor %}
+					</table>
 				</div>
 			</article>
 		</div>
