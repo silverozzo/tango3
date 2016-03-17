@@ -1,5 +1,6 @@
-from django.db        import models
-from django.db.models import Sum
+from django.db                  import models
+from django.db.models           import Sum
+from django.db.models.functions import Coalesce
 
 import decimal
 import math
@@ -55,12 +56,15 @@ class FoodMaterial(models.Model):
 	def get_cost(self, date):
 		item = self.get_item(date)
 		if not item:
-			return 0
+			return decimal.Decimal(0)
 		
 		return item.unit_cost
 	
 	def get_rest(self):
-		return FoodMaterialItem.objects.filter(food_material=self, rest__gt=0).aggregate(Sum('rest'))
+		result = FoodMaterialItem.objects.filter(food_material=self, rest__gt=0).aggregate(Sum('rest'))
+		if result['rest__sum'] is None:
+			return decimal.Decimal(0)
+		return result['rest__sum']
 	
 	def make_spend(self, count, transaction):
 		rest = count
@@ -153,6 +157,7 @@ class Calculation(models.Model):
 	what_count      = models.DecimalField(max_digits=8, decimal_places=4)
 	what_unit_name  = models.CharField(max_length=200)
 	what_full_cost  = models.DecimalField(max_digits=8, decimal_places=2)
+	feasible        = models.BooleanField(default=False)
 	on_prescription = models.ForeignKey(Recipe)
 	on_ingredient   = models.ForeignKey(RecipeIngredient, default=None)
 	
@@ -171,6 +176,7 @@ class Calculation(models.Model):
 		calculation.what_unit_name  = ingredient.food_material.unit_name
 		calculation.on_prescription = ingredient.recipe
 		calculation.on_ingredient   = ingredient
+		calculation.feasible        = ingredient.food_material.get_rest() >= ingredient.count
 		calculation.save()
 		
 		return calculation
@@ -210,10 +216,11 @@ class Product(models.Model):
 
 
 class SaleOffer(models.Model):
-	product = models.ForeignKey(Product)
-	day     = models.ForeignKey(WorkDay)
-	cost    = models.DecimalField(max_digits=8, decimal_places=2, default=decimal.Decimal('0.00'))
-	price   = models.DecimalField(max_digits=8, decimal_places=2, default=decimal.Decimal('0.00'))
+	product  = models.ForeignKey(Product)
+	day      = models.ForeignKey(WorkDay)
+	cost     = models.DecimalField(max_digits=8, decimal_places=2, default=decimal.Decimal('0.00'))
+	price    = models.DecimalField(max_digits=8, decimal_places=2, default=decimal.Decimal('0.00'))
+	feasible = models.BooleanField(default=False)
 	
 	class Meta:
 		ordering = ('product__name',)
@@ -225,16 +232,21 @@ class SaleOffer(models.Model):
 		return unicode(self.product) + ' (' + str(self.day) + ') -- ' + str(self.price)
 	
 	def save(self, *args, **kwargs):
-		cost  = decimal.Decimal('0.00')
-		price = decimal.Decimal('0.00')
+		cost     = decimal.Decimal('0.00')
+		price    = decimal.Decimal('0.00')
+		feasible = True
 		
 		ingredients = RecipeIngredient.objects.filter(recipe=self.product.recipe)
 		for ingredient in ingredients:
 			calculation = Calculation.create(ingredient)
 			cost += calculation.what_full_cost
+			
+			if not calculation.feasible:
+				feasible = False
 		
-		self.cost  = cost
-		self.price = self.product.make_price(cost)
+		self.cost     = cost
+		self.price    = self.product.make_price(cost)
+		self.feasible = feasible
 		
 		return super(SaleOffer, self).save(*args, **kwargs)
 	

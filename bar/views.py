@@ -2,7 +2,7 @@ from django.http      import HttpResponse
 from django.shortcuts import render, redirect
 from django.views     import generic
 
-from .models   import FoodMaterial, Product, SaleOffer, WorkDay
+from .models   import FoodMaterial, Product, SaleOffer, WorkDay, Account, AccountTransaction
 from .services import FoodMaterialImportService, SimpleProductImportService, ComplexProductImportService
 
 
@@ -20,25 +20,19 @@ def login_view(request):
 def food_material_import(request):
 	if request.FILES and request.FILES['import']:
 		FoodMaterialImportService.run(request.FILES['import'])
-		return HttpResponse('file is here!')
-	else:
-		return HttpResponse('file lost..')
+	return redirect('bar:food_material_list')
 
 
 def simple_product_import(request):
 	if request.FILES and request.FILES['import']:
 		SimpleProductImportService.run(request.FILES['import'], request.POST['prefix'])
-		return HttpResponse('file is here!')
-	else:
-		return HttpResponse('file lost..')
+	return redirect('bar:product_list')
 
 
 def complex_product_import(request):
 	if request.FILES and request.FILES['import']:
 		ComplexProductImportService.run(request.FILES['import'], request.POST['prefix'])
-		return HttpResponse('file is here!')
-	else:
-		return HttpResponse('file lost...')
+	return redirect('bar:product_list')
 
 
 def sale_offer_generator(request):
@@ -81,4 +75,24 @@ class SaleOfferListView(generic.ListView):
 		context = super(SaleOfferListView, self).get_context_data(**kwargs)
 		context['user']  = self.request.user
 		context['today'] = WorkDay.get_current()
+		return context
+
+
+class TransactionListView(generic.ListView):
+	model               = AccountTransaction
+	template_name       = 'bar/transaction_list.html'
+	context_object_name = 'transactions'
+	
+	def get_queryset(self):
+		day = WorkDay.get_current()
+		return AccountTransaction.objects.filter(day=day)
+	
+	def get_context_data(self, **kwargs):
+		day = WorkDay.get_current()
+		
+		context = super(TransactionListView, self).get_context_data(**kwargs)
+		context['user']     = self.request.user
+		context['today']    = day
+		context['offers']   = SaleOffer.objects.filter(day=day, feasible=True)
+		context['accounts'] = Account.objects.all()
 		return context

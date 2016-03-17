@@ -24,6 +24,7 @@
 					<li><a href={% url 'bar:food_material_list' %}>food materials</a></li>
 					<li class="active"><a href={% url 'bar:product_list' %}>products</a></li>
 					<li><a href={% url 'bar:sale_offer_list' %}>sale offers</a></li>
+					<li><a href={% url 'bar:transaction_list' %}>transactions</a></li>
 				</ul>
 			</nav>
 		</header>
@@ -63,7 +64,7 @@
 							{% for product in products %}
 								<tr>
 									<td>{{ product.name }}</td>
-									<td>{{ product.is_active }}</td>
+									<td>{% if product.is_active %}V{% endif %}</td>
 								</tr>
 							{% endfor %}
 						</table>
