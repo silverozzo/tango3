@@ -31,16 +31,22 @@
 		<div class="info">
 			<article class="article clearfix">
 				<div class="col_33">
-					<form action={% url 'bar:food_material_import' %} method="post" enctype="multipart/form-data">
-						<h2>tsv import</h2>
-						{% csrf_token %}
-						<input type="file" name="import" />
-						<input type="submit" class="button" />
-					</form>
+					{% if user.is_authenticated %}
+						<form action={% url 'bar:food_material_import' %} method="post" enctype="multipart/form-data">
+							<h2>tsv import</h2>
+							{% csrf_token %}
+							<input type="file" name="import" />
+							<input type="submit" class="button" />
+						</form>
+					{% else %}
+						&nbsp;
+					{% endif %}
 				</div>
 				
 				<div class="col_66">
 					{% if food_materials %}
+					<h2>food materials</h2>
+					
 					<table class="table">
 						<tr>
 							<th>name</th>

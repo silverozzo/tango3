@@ -14,7 +14,7 @@ def index(request):
 
 
 def login_view(request):
-	pass
+	return redirect('admin:login')
 
 
 def food_material_import(request):
@@ -50,12 +50,22 @@ class FoodMaterialListView(generic.ListView):
 	model               = FoodMaterial
 	template_name       = 'bar/food_material_list.html'
 	context_object_name = 'food_materials'
+	
+	def get_context_data(self, **kwargs):
+		context = super(FoodMaterialListView, self).get_context_data(**kwargs)
+		context['user']  = self.request.user
+		return context
 
 
 class ProductListView(generic.ListView):
 	model               = Product
 	template_name       = 'bar/product_list.html'
 	context_object_name = 'products'
+	
+	def get_context_data(self, **kwargs):
+		context = super(ProductListView, self).get_context_data(**kwargs)
+		context['user']  = self.request.user
+		return context
 
 
 class SaleOfferListView(generic.ListView):
