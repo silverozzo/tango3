@@ -117,4 +117,5 @@ class TransactionListView(generic.ListView):
 		context['today']    = day
 		context['offers']   = SaleOffer.objects.filter(day=day, feasible=True)
 		context['accounts'] = Account.objects.all()
+		context['totals']   = AccountTransaction.get_totals(day)
 		return context

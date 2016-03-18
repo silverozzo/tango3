@@ -82,6 +82,7 @@
 				</div>
 				
 				<div class="col_50">
+					<h2>transactions today ({{ today.date }})</h2>
 					<table class='table'>
 						<tr>
 							<th>account</th>
@@ -93,6 +94,18 @@
 								<td>{{ transaction.account }}</td>
 								<td>{{ transaction.sale_offer.product.name }}</td>
 								<td align='right'>{{ transaction.summ }}</td>
+							</tr>
+						{% endfor %}
+					</table>
+					
+					<hr/>
+					
+					<h2>totals today ({{ today.date }})</h2>
+					<table class='table'>
+						{% for row in totals %}
+							<tr>
+								<td>{{ row.account__name }}</td>
+								<td align='right'>{{ row.summ }}</td>
 							</tr>
 						{% endfor %}
 					</table>

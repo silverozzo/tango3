@@ -308,6 +308,10 @@ class AccountTransaction(models.Model):
 			ingredients = RecipeIngredient.objects.filter(recipe=self.sale_offer.product.recipe)
 			for ingredient in ingredients:
 				ingredient.food_material.make_spend(ingredient.count, self)
+	
+	@staticmethod
+	def get_totals(day):
+		return AccountTransaction.objects.filter(day=day).values('account', 'account__name', 'day').annotate(summ=Sum('summ'))
 
 
 class FoodMaterialSpend(models.Model):
