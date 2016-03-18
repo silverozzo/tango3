@@ -34,6 +34,7 @@
 				<div class="col_50">
 					{% if user.is_authenticated %}
 						<form action={% url 'bar:add_transaction' %} method='post'>
+							<h2>add transaction</h2>
 							{% csrf_token %}
 							<input type='submit' class='button' /><br/><br/>
 							
@@ -51,6 +52,29 @@
 									</tr>
 								{% endfor %}
 							</table>
+						</form>
+						
+						<hr/>
+						
+						<form action={% url 'bar:add_account' %} method='post'>
+							<h2>add account</h2>
+							{% csrf_token %}
+							
+							<p class="col_50">
+								<label for='name'>name</label><br/>
+								<input type='text' name='name' id='name'/>
+							</p>
+							
+							<p class="col_50">
+								<label for="is_default"><input type="checkbox" name="is_default" id="is_default" /> is default</label><br/>
+								<label for="costed"><input type="checkbox" name="costed" id="costed" /> costed</label>
+							</p>
+							
+							<div class="clearfix"></div><br/>
+							
+							<p class='col_100'>
+								<input type='submit' class='button'/>
+							</p>
 						</form>
 					{% else %}
 						&nbsp;

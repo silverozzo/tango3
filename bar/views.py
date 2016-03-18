@@ -51,6 +51,17 @@ def add_transaction_form(request):
 	return redirect('bar:transaction_list')
 
 
+def add_account_form(request):
+	if request.POST['name']:
+		account = Account(
+			name       = request.POST['name'],
+			is_default = request.POST.get('is_default', False),
+			costed     = request.POST.get('costed',     False),
+		)
+		account.save()
+	return redirect('bar:transaction_list')
+
+
 class FoodMaterialListView(generic.ListView):
 	model               = FoodMaterial
 	template_name       = 'bar/food_material_list.html'
