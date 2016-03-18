@@ -47,13 +47,17 @@
 							<tr>
 								<th>product name</th>
 								<th>price</th>
-								<th>feasible</th>
+								{% if user.is_authenticated %}
+									<th>feasible</th>
+								{% endif %}
 							</tr>
 							{% for sale_offer in sale_offers %}
 								<tr>
 									<td>{{ sale_offer.product.name }}</td>
 									<td align='right'>{{ sale_offer.price }}</td>
-									<td>{% if sale_offer.feasible %}V{% endif %}</td>
+									{% if user.is_authenticated %}
+										<td>{% if sale_offer.feasible %}V{% endif %}</td>
+									{% endif %}
 								<tr>
 							{% endfor %}
 						</table>

@@ -96,7 +96,10 @@ class SaleOfferListView(generic.ListView):
 	
 	def get_queryset(self):
 		day = WorkDay.get_current()
-		return SaleOffer.objects.filter(day=day)
+		if self.request.user.is_authenticated():
+			return SaleOffer.objects.filter(day=day)
+		else:
+			return SaleOffer.objects.filter(day=day, feasible=True)
 	
 	def get_context_data(self, **kwargs):
 		context = super(SaleOfferListView, self).get_context_data(**kwargs)
