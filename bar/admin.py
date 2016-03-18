@@ -33,7 +33,7 @@ class RecipeAdmin(admin.ModelAdmin):
 class CalculationAdmin(admin.ModelAdmin):
 	list_display = ('when_date', 'on_prescription', 'what_name', 
 		'what_unit_cost', 'what_count', 'what_unit_name', 
-		'what_full_cost', 'on_ingredient'
+		'what_full_cost', 'on_ingredient', 'feasible'
 	)
 	list_filter = ('when_date', 'on_prescription')
 

@@ -1,45 +1,46 @@
-from django.http      import HttpResponse
-from django.shortcuts import render, redirect, get_object_or_404
-from django.views     import generic
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators        import login_required
+from django.http                           import HttpResponse
+from django.shortcuts                      import render, redirect, get_object_or_404
+from django.utils.decorators               import method_decorator
+from django.views                          import generic
 
 from .models   import FoodMaterial, Product, SaleOffer, WorkDay, Account, AccountTransaction
 from .services import FoodMaterialImportService, SimpleProductImportService, ComplexProductImportService
 
 
 def index(request):
-	if request.user.is_authenticated():
-		return render(request, 'bar/main_menu.html', {})
-	else:
-		return redirect('bar:login')
+	return render(request, 'bar/main_menu.html', {})
 
 
-def login_view(request):
-	return redirect('admin:login')
-
-
+@staff_member_required
 def food_material_import(request):
 	if request.FILES and request.FILES['import']:
 		FoodMaterialImportService.run(request.FILES['import'])
 	return redirect('bar:food_material_list')
 
 
+@staff_member_required
 def simple_product_import(request):
 	if request.FILES and request.FILES['import']:
 		SimpleProductImportService.run(request.FILES['import'], request.POST['prefix'])
 	return redirect('bar:product_list')
 
 
+@staff_member_required
 def complex_product_import(request):
 	if request.FILES and request.FILES['import']:
 		ComplexProductImportService.run(request.FILES['import'], request.POST['prefix'])
 	return redirect('bar:product_list')
 
 
+@staff_member_required
 def sale_offer_generator(request):
 	SaleOffer.generate()
 	return redirect('bar:sale_offer_list')
 
 
+@staff_member_required
 def add_transaction_form(request):
 	if request.POST['sale_offer'] and request.POST['account']:
 		transaction = AccountTransaction(
@@ -51,6 +52,7 @@ def add_transaction_form(request):
 	return redirect('bar:transaction_list')
 
 
+@staff_member_required
 def add_account_form(request):
 	if request.POST['name']:
 		account = Account(
@@ -78,6 +80,9 @@ class ProductListView(generic.ListView):
 	template_name       = 'bar/product_list.html'
 	context_object_name = 'products'
 	
+	def get_queryset(self):
+		return Product.objects.order_by('name')
+	
 	def get_context_data(self, **kwargs):
 		context = super(ProductListView, self).get_context_data(**kwargs)
 		context['user']  = self.request.user
@@ -104,6 +109,10 @@ class TransactionListView(generic.ListView):
 	model               = AccountTransaction
 	template_name       = 'bar/transaction_list.html'
 	context_object_name = 'transactions'
+	
+	@method_decorator(login_required(login_url='/admin/login/'))
+	def dispatch(self, request, *args, **kwargs):
+		return super(TransactionListView, self).dispatch(request, *args, **kwargs)
 	
 	def get_queryset(self):
 		day = WorkDay.get_current()

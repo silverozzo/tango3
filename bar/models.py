@@ -116,7 +116,7 @@ class FoodMaterialItem(models.Model):
 		self.unit_cost = decimal.Decimal(self.cost) / decimal.Decimal(self.count)
 		self.unit_cost = self.unit_cost.quantize(self.cost, rounding=decimal.ROUND_UP)
 		
-		if not self.pk:
+		if not self.pk and self.rest is None:
 			self.rest = self.count
 		
 		return super(FoodMaterialItem, self).save(*args, **kwargs)
@@ -194,7 +194,7 @@ class Product(models.Model):
 	fixed_price = models.DecimalField(max_digits=8, decimal_places=2, default=0)
 	rounding    = models.DecimalField(max_digits=8, decimal_places=2, default=1)
 	markup      = models.DecimalField(max_digits=8, decimal_places=2, default=1)
-	is_active   = models.BooleanField(default=False)
+	is_active   = models.BooleanField(default=True)
 	
 	def __unicode__(self):
 		return self.name

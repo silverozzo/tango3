@@ -32,8 +32,12 @@ class FoodMaterialImportService():
 			
 			day = None
 			if len(chunks) >= 8 and chunks[7]:
-				day = FoodMaterialImportService.get_work_day(chunks[7])
-				FoodMaterialImportService.check_item(material, day, chunks[2], chunks[3])
+				day  = FoodMaterialImportService.get_work_day(chunks[7])
+				rest = None
+				if len(chunks) >= 9 and chunks[8]:
+					rest = convert_to_money(chunks[8])
+				
+				FoodMaterialImportService.check_item(material, day, chunks[2], chunks[3], rest)
 			else:
 				print('no item for material: ' + unicode(material))
 	
@@ -60,7 +64,7 @@ class FoodMaterialImportService():
 		return day
 	
 	@staticmethod
-	def check_item(material, day, cost, count):
+	def check_item(material, day, cost, count, rest):
 		FoodMaterialItem.objects.filter(food_material=material, when=day).delete()
 		
 		cost  = convert_to_money(cost)
@@ -71,6 +75,7 @@ class FoodMaterialImportService():
 			when          = day,
 			cost          = cost,
 			count         = count,
+			rest          = rest
 		)
 		item.save()
 
