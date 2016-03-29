@@ -145,14 +145,15 @@ class FoodMaterialTests(TestCase):
 	
 	def test_empty_rest(self):
 		material = food_material_creating()
-		self.assertEqual(Decimal(0), material.get_rest())
+		day      = work_day_creating()
+		self.assertEqual(Decimal(0), material.get_rest(day))
 	
 	def test_simple_rest(self):
 		material = food_material_creating()
 		day      = work_day_creating()
 		food_material_item_creating(material, day)
 		food_material_item_creating(material, day)
-		self.assertEqual(Decimal(2), material.get_rest())
+		self.assertEqual(Decimal(2), material.get_rest(day))
 	
 	def test_simple_cached_rest(self):
 		material = food_material_creating()
@@ -180,12 +181,32 @@ class FoodMaterialTests(TestCase):
 		day         = work_day_creating('2016-03-01')
 		account     = account_creating()
 		transaction = transaction_creating(account, day)
-
+		
 		food_material_item_creating(material, day)
 		food_material_spend_creating(material, day, transaction)
-
+		
 		rest = FoodMaterialCachedRest.get_count(material, day)
 		self.assertEqual(Decimal('0.5'), rest)
+	
+	def test_autoclear_cached_rest(self):
+		material = food_material_creating()
+		day      = work_day_creating()
+		
+		check = FoodMaterialCachedRest.objects.all().count()
+		self.assertEqual(0, check)
+		rest = FoodMaterialCachedRest.get_count(material, day)
+		self.assertEqual(Decimal(0), rest)
+		check = FoodMaterialCachedRest.objects.all().count()
+		self.assertEqual(1, check)
+		
+		food_material_item_creating(material, day)
+		
+		check = FoodMaterialCachedRest.objects.all().count()
+		self.assertEqual(0, check)
+		rest = FoodMaterialCachedRest.get_count(material, day)
+		self.assertEqual(Decimal(1), rest)
+		check = FoodMaterialCachedRest.objects.all().count()
+		self.assertEqual(1, check)
 
 
 class CalculationTests(TestCase):

@@ -69,14 +69,12 @@ class FoodMaterial(models.Model):
 		
 		return item.unit_cost
 	
-	def get_rest(self):
+	def get_rest(self, day=None):
 		"""
 		Getting the rest of the food material in the bar store by now.
 		"""
-		result = FoodMaterialItem.objects.filter(food_material=self, rest__gt=0).aggregate(Sum('rest'))
-		if result['rest__sum'] is None:
-			return decimal.Decimal(0)
-		return result['rest__sum']
+		if day is None: day = WorkDay.get_current()
+		return FoodMaterialCachedRest.get_count(self, day)
 	
 	def get_spend(self):
 		"""
@@ -135,48 +133,55 @@ class FoodMaterialItem(models.Model):
 		return super(FoodMaterialItem, self).save(*args, **kwargs)
 	
 	@staticmethod
-	def get_rest(material, date):
+	def get_rest(material, day):
 		if not FoodMaterialItem.objects.filter(
 				food_material   = material, 
 				rest__gt        = 0, 
-				when__date__lte = date.date
+				when__date__lte = day.date
 			).exists():
 			return decimal.Decimal(0)
 		items = FoodMaterialItem.objects.filter(
 				food_material   = material, 
 				rest__gt        = 0, 
-				when__date__lte = date.date
+				when__date__lte = day.date
 			).aggregate(Sum('rest'))
 		return items['rest__sum']
 
 
 class FoodMaterialCachedRest(models.Model):
 	food_material = models.ForeignKey(FoodMaterial)
-	date          = models.ForeignKey(WorkDay)
+	when          = models.ForeignKey(WorkDay)
 	count         = models.DecimalField(max_digits=8, decimal_places=4)
 	
 	class Meta():
-		ordering = ['-date__date']
+		ordering = ['-when__date']
 	
 	@staticmethod
-	def create(material, date):
-		items  = FoodMaterialItem.get_rest(material, date)
-		spends = FoodMaterialSpend.get_count(material, date)
+	def create(material, day):
+		items  = FoodMaterialItem.get_rest(material, day)
+		spends = FoodMaterialSpend.get_count(material, day)
 		count  = items - spends
 		rest   = FoodMaterialCachedRest(
 				food_material = material,
-				date          = date,
+				when          = day,
 				count         = count
 			)
 		rest.save()
 		return rest
 	
 	@staticmethod
-	def get_count(material, date):
-		if FoodMaterialCachedRest.objects.filter(food_material=material, date=date).exists():
-			return FoodMaterialCachedRest.objects.get(food_material=material, date=date).count
-		rest = FoodMaterialCachedRest.create(material, date)
+	def get_count(material, day):
+		if FoodMaterialCachedRest.objects.filter(food_material=material, when=day).exists():
+			return FoodMaterialCachedRest.objects.get(food_material=material, when=day).count
+		rest = FoodMaterialCachedRest.create(material, day)
 		return rest.count
+	
+	@staticmethod
+	def clear_from(material, day):
+		FoodMaterialCachedRest.objects.filter(
+				food_material   = material, 
+				when__date__gte = day.date
+			).delete()
 
 
 class Recipe(models.Model):
@@ -390,16 +395,16 @@ class FoodMaterialSpend(models.Model):
 		spend.save()
 	
 	@staticmethod
-	def get_count(material, date):
+	def get_count(material, day):
 		if not FoodMaterialSpend.objects.filter(
-					food_material  = material, 
-					count__gt      = 0, 
-					when__date__lte= date.date
+					food_material   = material, 
+					count__gt       = 0, 
+					when__date__lte = day.date
 				).exists():
 			return decimal.Decimal(0)
 		spends = FoodMaterialSpend.objects.filter(
 				food_material   = material, 
 				count__gt       = 0, 
-				when__date__lte = date.date
+				when__date__lte = day.date
 			).aggregate(Sum('count'))
 		return spends['count__sum']

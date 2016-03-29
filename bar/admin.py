@@ -1,7 +1,8 @@
 from django.contrib import admin
 
-from .models import WorkDay, FoodMaterial, FoodMaterialItem, FoodMaterialSpend
-from .models import Recipe, RecipeIngredient, Calculation, Product, SaleOffer, Account, AccountTransaction
+from bar.models import WorkDay, FoodMaterial
+from bar.models import FoodMaterialItem, FoodMaterialSpend, FoodMaterialCachedRest
+from bar.models import Recipe, RecipeIngredient, Calculation, Product, SaleOffer, Account, AccountTransaction
 
 
 class WorkDayAdmin(admin.ModelAdmin):
@@ -16,10 +17,18 @@ class FoodMaterialSpendInline(admin.TabularInline):
 	model = FoodMaterialSpend
 
 
+class FoodMaterialCachedRestInline(admin.TabularInline):
+	model = FoodMaterialCachedRest
+
+
 class FoodMaterialAdmin(admin.ModelAdmin):
 	list_display  = ('name', 'unit_name')
 	list_editable = ['unit_name']
-	inlines       = [FoodMaterialItemInline, FoodMaterialSpendInline]
+	inlines       = [
+			FoodMaterialItemInline, 
+			FoodMaterialSpendInline,
+			FoodMaterialCachedRestInline,
+		]
 
 
 class RecipeIngredientInline(admin.TabularInline):
