@@ -40,6 +40,9 @@ class FoodMaterial(models.Model):
 		return self.name
 	
 	def get_item(self, date):
+		"""
+		Getting last item of food material in the bar store just for calculating unit cost.
+		"""
 		item = FoodMaterialItem.objects.filter(food_material=self, when__date__lte=date)
 		if not item.exists():
 			return None
@@ -47,6 +50,9 @@ class FoodMaterial(models.Model):
 		return item.order_by('-when__date')[0]
 	
 	def get_item_with_rest(self):
+		"""
+		Getting not empty food material in the bar store (not empty bottle of something).
+		"""
 		item = FoodMaterialItem.objects.filter(food_material=self, rest__gt=0)
 		if not item.exists():
 			return None
@@ -54,6 +60,9 @@ class FoodMaterial(models.Model):
 		return item.order_by('when__date')[0]
 	
 	def get_cost(self, date):
+		"""
+		Getting the unit cost of the food material by the date.
+		"""
 		item = self.get_item(date)
 		if not item:
 			return decimal.Decimal(0)
@@ -61,12 +70,18 @@ class FoodMaterial(models.Model):
 		return item.unit_cost
 	
 	def get_rest(self):
+		"""
+		Getting the rest of the food material in the bar store by now.
+		"""
 		result = FoodMaterialItem.objects.filter(food_material=self, rest__gt=0).aggregate(Sum('rest'))
 		if result['rest__sum'] is None:
 			return decimal.Decimal(0)
 		return result['rest__sum']
 	
 	def get_spend(self):
+		"""
+		Getting the spend of the food material in all time.
+		"""
 		result = FoodMaterialSpend.objects.filter(food_material=self, count__gt=0).aggregate(Sum('count'))
 		if result['count_sum'] is None:
 			return decimal.Decimal(0)
@@ -118,6 +133,50 @@ class FoodMaterialItem(models.Model):
 			self.rest = self.count
 		
 		return super(FoodMaterialItem, self).save(*args, **kwargs)
+	
+	@staticmethod
+	def get_rest(material, date):
+		if not FoodMaterialItem.objects.filter(
+				food_material   = material, 
+				rest__gt        = 0, 
+				when__date__lte = date.date
+			).exists():
+			return decimal.Decimal(0)
+		items = FoodMaterialItem.objects.filter(
+				food_material   = material, 
+				rest__gt        = 0, 
+				when__date__lte = date.date
+			).aggregate(Sum('rest'))
+		return items['rest__sum']
+
+
+class FoodMaterialCachedRest(models.Model):
+	food_material = models.ForeignKey(FoodMaterial)
+	date          = models.ForeignKey(WorkDay)
+	count         = models.DecimalField(max_digits=8, decimal_places=4)
+	
+	class Meta():
+		ordering = ['-date__date']
+	
+	@staticmethod
+	def create(material, date):
+		items  = FoodMaterialItem.get_rest(material, date)
+		spends = FoodMaterialSpend.get_count(material, date)
+		count  = items - spends
+		rest   = FoodMaterialCachedRest(
+				food_material = material,
+				date          = date,
+				count         = count
+			)
+		rest.save()
+		return rest
+	
+	@staticmethod
+	def get_count(material, date):
+		if FoodMaterialCachedRest.objects.filter(food_material=material, date=date).exists():
+			return FoodMaterialCachedRest.objects.get(food_material=material, date=date).count
+		rest = FoodMaterialCachedRest.create(material, date)
+		return rest.count
 
 
 class Recipe(models.Model):
@@ -276,7 +335,7 @@ class Account(models.Model):
 class AccountTransaction(models.Model):
 	account    = models.ForeignKey(Account)
 	day        = models.ForeignKey(WorkDay)
-	sale_offer = models.ForeignKey(SaleOffer, blank=True, default=None)
+	sale_offer = models.ForeignKey(SaleOffer, blank=True, default=None, null=True)
 	summ       = models.DecimalField(max_digits=8, decimal_places=2, blank=True)
 	mod_half   = models.BooleanField(default=False)
 	
@@ -287,7 +346,7 @@ class AccountTransaction(models.Model):
 		return unicode(self.sale_offer.product) + ' for ' + str(self.summ)
 	
 	def save(self, *args, **kwargs):
-		if self.summ is None or self.summ == 0:
+		if self.sale_offer and (self.summ is None or self.summ == 0):
 			if self.account.costed:
 				self.summ = self.sale_offer.cost
 			else:
@@ -302,7 +361,7 @@ class AccountTransaction(models.Model):
 		
 		super(AccountTransaction, self).save(*args, **kwargs)
 		
-		if need_spend:
+		if need_spend and self.sale_offer:
 			ingredients = RecipeIngredient.objects.filter(recipe=self.sale_offer.product.recipe)
 			for ingredient in ingredients:
 				ingredient.food_material.make_spend(ingredient.count, self)
@@ -329,3 +388,18 @@ class FoodMaterialSpend(models.Model):
 		spend.count         = count
 		spend.when          = transaction.day
 		spend.save()
+	
+	@staticmethod
+	def get_count(material, date):
+		if not FoodMaterialSpend.objects.filter(
+					food_material  = material, 
+					count__gt      = 0, 
+					when__date__lte= date.date
+				).exists():
+			return decimal.Decimal(0)
+		spends = FoodMaterialSpend.objects.filter(
+				food_material   = material, 
+				count__gt       = 0, 
+				when__date__lte = date.date
+			).aggregate(Sum('count'))
+		return spends['count__sum']

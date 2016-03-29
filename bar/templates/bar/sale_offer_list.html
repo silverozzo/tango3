@@ -34,6 +34,7 @@
 				
 				<div class="col_33">
 					{% if user.is_authenticated %}
+						<!-- TODO: it must be chenged into POST form -->
 						<a href={% url 'bar:sale_offer_generator' %}>generating</a>
 					{% else %}
 						&nbsp;

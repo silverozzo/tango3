@@ -2,8 +2,10 @@ from datetime    import datetime
 from decimal     import Decimal, getcontext
 from django.test import TestCase
 
-from .models import WorkDay, FoodMaterial, FoodMaterialItem, Recipe 
-from .models import RecipeIngredient, Calculation
+from .models import WorkDay, Account, AccountTransaction
+from .models import FoodMaterial, FoodMaterialItem, FoodMaterialSpend
+from .models import FoodMaterialCachedRest
+from .models import Recipe, RecipeIngredient, Calculation
 
 
 def work_day_creating(date=datetime.now().date()):
@@ -24,7 +26,6 @@ def work_day_current_creating(date=datetime.now().date()):
 def food_material_creating(name='foobar'):
 	material = FoodMaterial(name=name)
 	material.save()
-	
 	return material
 
 
@@ -37,14 +38,23 @@ def food_material_item_creating(material, day, cost=Decimal('1.0')):
 		rest          = Decimal('1.0')
 	)
 	item.save()
-	
 	return item
+
+
+def food_material_spend_creating(material, day, transaction, count=Decimal('0.5')):
+	spend = FoodMaterialSpend(
+		food_material = material,
+		when          = day,
+		count         = count,
+		transaction   = transaction,
+	)
+	spend.save()
+	return spend
 
 
 def recipe_creating(name='foobar'):
 	recipe = Recipe(name=name)
 	recipe.save()
-	
 	return recipe
 
 
@@ -55,8 +65,23 @@ def recipe_ingredient_creating(recipe, material):
 		count         = Decimal('0.01')
 	)
 	ingredient.save()
-	
 	return ingredient
+
+
+def account_creating():
+	account = Account();
+	account.save()
+	return account
+
+
+def transaction_creating(account, day):
+	transaction = AccountTransaction(
+		account = account,
+		day     = day,
+		summ    = Decimal(1)
+	)
+	transaction.save()
+	return transaction
 
 
 class WorkDayTests(TestCase):
@@ -128,6 +153,39 @@ class FoodMaterialTests(TestCase):
 		food_material_item_creating(material, day)
 		food_material_item_creating(material, day)
 		self.assertEqual(Decimal(2), material.get_rest())
+	
+	def test_simple_cached_rest(self):
+		material = food_material_creating()
+		day      = work_day_creating()
+		food_material_item_creating(material, day)
+		
+		rest = FoodMaterialCachedRest.get_count(material, day)
+		self.assertEqual(Decimal(1), rest)
+	
+	def test_cached_rest_from_yestarday(self):
+		material = food_material_creating()
+		day1     = work_day_creating('2016-03-01')
+		food_material_item_creating(material, day1)
+		day2     = work_day_creating('2016-03-02')
+		food_material_item_creating(material, day2)
+		
+		rest = FoodMaterialCachedRest.get_count(material, day1)
+		self.assertEqual(Decimal(1), rest)
+		
+		rest = FoodMaterialCachedRest.get_count(material, day2)
+		self.assertEqual(Decimal(2), rest)
+
+	def test_cached_rest_with_spend(self):
+		material    = food_material_creating()
+		day         = work_day_creating('2016-03-01')
+		account     = account_creating()
+		transaction = transaction_creating(account, day)
+
+		food_material_item_creating(material, day)
+		food_material_spend_creating(material, day, transaction)
+
+		rest = FoodMaterialCachedRest.get_count(material, day)
+		self.assertEqual(Decimal('0.5'), rest)
 
 
 class CalculationTests(TestCase):
