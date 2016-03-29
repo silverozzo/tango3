@@ -66,33 +66,31 @@ class FoodMaterial(models.Model):
 			return decimal.Decimal(0)
 		return result['rest__sum']
 	
+	def get_spend(self):
+		result = FoodMaterialSpend.objects.filter(food_material=self, count__gt=0).aggregate(Sum('count'))
+		if result['count_sum'] is None:
+			return decimal.Decimal(0)
+		return result['count_sum']
+	
 	def make_spend(self, count, transaction):
 		rest = count
 		for item in FoodMaterialItem.objects.filter(food_material=self, rest__gt=0).order_by('when__date'):
 			if rest <= decimal.Decimal(0):
-				print('rest is empty')
 				break
 			
 			if item.rest >= rest:
-				print('rest is less')
 				item.rest -= rest
 				item.save()
 				rest = decimal.Decimal(0)
 				continue
 			
 			if item.rest < rest:
-				print('rest is more')
 				rest -= item.rest
 				item.rest = decimal.Decimal(0)
 				item.save()
 				continue
 		
-		spend = FoodMaterialSpend()
-		spend.food_material = self
-		spend.transaction   = transaction
-		spend.count         = count - rest
-		spend.when          = transaction.day
-		spend.save()
+		FoodMaterialSpend.create(self, transaction, count - rest)
 
 
 class FoodMaterialItem(models.Model):
@@ -278,7 +276,7 @@ class Account(models.Model):
 class AccountTransaction(models.Model):
 	account    = models.ForeignKey(Account)
 	day        = models.ForeignKey(WorkDay)
-	sale_offer = models.ForeignKey(SaleOffer)
+	sale_offer = models.ForeignKey(SaleOffer, blank=True, default=None)
 	summ       = models.DecimalField(max_digits=8, decimal_places=2, blank=True)
 	mod_half   = models.BooleanField(default=False)
 	
@@ -322,3 +320,12 @@ class FoodMaterialSpend(models.Model):
 	
 	def __unicode__(self):
 		return unicode(self.food_material) + ' x ' + str(self.count) + ' (' + str(self.when) + ')'
+	
+	@staticmethod
+	def create(material, transaction, count):
+		spend = FoodMaterialSpend()
+		spend.food_material = self
+		spend.transaction   = transaction
+		spend.count         = count
+		spend.when          = transaction.day
+		spend.save()

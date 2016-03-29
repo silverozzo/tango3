@@ -40,7 +40,9 @@
 							
 							<select name='account'>
 								{% for account in accounts %}
-									<option value='{{ account.id }}' {% if account.is_default %}selected{% endif %}>{{ account }}</option>
+									<option value='{{ account.id }}' {% if account.is_default %}selected{% endif %}>
+										{{ account.name }}
+									</option>
 								{% endfor %}
 							</select>
 							<table class='table'>
@@ -91,7 +93,7 @@
 						</tr>
 						{% for transaction in transactions %}
 							<tr>
-								<td>{{ transaction.account }}</td>
+								<td>{{ transaction.account.name }}</td>
 								<td>{{ transaction.sale_offer.product.name }}</td>
 								<td align='right'>{{ transaction.summ }}</td>
 							</tr>

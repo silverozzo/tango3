@@ -117,6 +117,17 @@ class FoodMaterialTests(TestCase):
 		item.save()
 		
 		self.assertEqual(Decimal('0.01'), item.unit_cost)
+	
+	def test_empty_rest(self):
+		material = food_material_creating()
+		self.assertEqual(Decimal(0), material.get_rest())
+	
+	def test_simple_rest(self):
+		material = food_material_creating()
+		day      = work_day_creating()
+		food_material_item_creating(material, day)
+		food_material_item_creating(material, day)
+		self.assertEqual(Decimal(2), material.get_rest())
 
 
 class CalculationTests(TestCase):
